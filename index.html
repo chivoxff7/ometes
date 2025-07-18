@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OmeChat - Chat Anónimo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .header h1 {
+            color: white;
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+
+        .container {
+            flex: 1;
+            display: flex;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            gap: 2rem;
+            width: 100%;
+        }
+
+        .chat-section {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            min-height: 600px;
+        }
+
+        .video-section {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .status-bar {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #28a745;
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.disconnected {
+            background: #dc3545;
+        }
+
+        .status-dot.connecting {
+            background: #ffc107;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            min-height: 300px;
+        }
+
+        .message {
+            margin-bottom: 1rem;
+            padding: 0.8rem 1rem;
+            border-radius: 15px;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+
+        .message.stranger {
+            background: #e3f2fd;
+            margin-right: auto;
+        }
+
+        .message.you {
+            background: #667eea;
+            color: white;
+            margin-left: auto;
+        }
+
+        .message.system {
+            background: #fff3cd;
+            color: #856404;
+            text-align: center;
+            max-width: 100%;
+            font-style: italic;
+        }
+
+        .message.warning {
+            background: #f8d7da;
+            color: #721c24;
+            text-align: center;
+            max-width: 100%;
+            font-weight: bold;
+        }
+
+        .chat-input {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .chat-input input {
+            flex: 1;
+            padding: 1rem;
+            border: 2px solid #e9ecef;
+            border-radius: 25px;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .chat-input input:focus {
+            border-color: #667eea;
+        }
+
+        .chat-input button {
+            padding: 1rem 2rem;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+
+        .chat-input button:hover {
+            background: #5a6fd8;
+        }
+
+        .chat-input button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .video-container {
+            position: relative;
+            flex: 1;
+            background: #000;
+            border-radius: 15px;
+            overflow: hidden;
+            margin-bottom: 1rem;
+            min-height: 300px;
+        }
+
+        .video-placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+            font-size: 1.2rem;
+        }
+
+        .video-controls {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        .control-btn {
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            font-size: 1rem;
+        }
+
+        .control-btn.primary {
+            background: #28a745;
+            color: white;
+        }
+
+        .control-btn.primary:hover {
+            background: #218838;
+        }
+
+        .control-btn.danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .control-btn.danger:hover {
+            background: #c82333;
+        }
+
+        .control-btn.secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .control-btn.secondary:hover {
+            background: #5a6268;
+        }
+
+        .control-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .warning-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .warning-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 500px;
+            margin: 2rem;
+        }
+
+        .warning-content h2 {
+            color: #dc3545;
+            margin-bottom: 1rem;
+        }
+
+        .warning-content p {
+            margin-bottom: 1rem;
+            line-height: 1.6;
+        }
+
+        .warning-content button {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .user-count {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .interests {
+            margin-bottom: 1rem;
+        }
+
+        .interests input {
+            width: 100%;
+            padding: 0.8rem;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 0.9rem;
+        }
+
+        .interests label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #666;
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+                padding: 1rem;
+            }
+            
+            .header {
+                padding: 1rem;
+            }
+            
+            .header h1 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎭 OmeChat</h1>
+        <p class="subtitle">Conecta con extraños de todo el mundo de forma anónima</p>
+    </div>
+
+    <div class="container">
+        <div class="chat-section">
+            <div class="status-bar">
+                <div class="status-indicator">
+                    <div class="status-dot disconnected" id="statusDot"></div>
+                    <span id="statusText">Desconectado</span>
+                </div>
+                <div class="user-count" id="userCount">0 usuarios conectados</div>
+            </div>
+
+            <div class="interests">
+                <label for="interestsInput">Intereses (opcional):</label>
+                <input type="text" id="interestsInput" placeholder="Ej: música, deportes, películas...">
+            </div>
+
+            <div class="chat-messages" id="chatMessages">
+                <div class="message system">
+                    Bienvenido a OmeChat. Haz clic en "Iniciar Chat" para conectar con un extraño.
+                </div>
+            </div>
+
+            <div class="chat-input">
+                <input type="text" id="messageInput" placeholder="Escribe tu mensaje..." disabled>
+                <button id="sendButton" disabled>Enviar</button>
+            </div>
+        </div>
+
+        <div class="video-section">
+            <div class="video-container">
+                <div class="video-placeholder" id="videoPlaceholder">
+                    📹 Video chat desactivado
+                </div>
+            </div>
+
+            <div class="video-controls">
+                <button class="control-btn primary" id="startButton">Iniciar Chat</button>
+                <button class="control-btn danger" id="nextButton" disabled>Siguiente</button>
+                <button class="control-btn secondary" id="stopButton" disabled>Detener</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="warning-modal" id="warningModal">
+        <div class="warning-content">
+            <h2>⚠️ Advertencia de Comportamiento</h2>
+            <p id="warningText"></p>
+            <button onclick="closeWarning()">Entendido</button>
+        </div>
+    </div>
+
+    <script>
+        class OmeChat {
+            constructor() {
+                this.isConnected = false;
+                this.isConnecting = false;
+                this.currentPartner = null;
+                this.userWarnings = parseInt(localStorage.getItem('omechat_warnings') || '0');
+                this.isBanned = localStorage.getItem('omechat_banned') === 'true';
+                this.userCount = Math.floor(Math.random() * 50000) + 10000;
+                
+                this.inappropriateKeywords = [
+                    'pene', 'penis', 'dick', 'cock', 'nude', 'naked', 'sex', 'sexo',
+                    'desnudo', 'desnuda', 'masturbate', 'masturbar', 'porn', 'porno',
+                    'horny', 'cachondo', 'tetas', 'boobs', 'ass', 'culo', 'pussy',
+                    'vagina', 'coño', 'fuck', 'joder', 'cam', 'webcam', 'show'
+                ];
+                
+                this.init();
+                this.checkBanStatus();
+            }
+
+            init() {
+                this.updateUserCount();
+                this.bindEvents();
+                
+                // Simular usuarios conectados
+                setInterval(() => {
+                    this.userCount += Math.floor(Math.random() * 10) - 5;
+                    this.userCount = Math.max(5000, this.userCount);
+                    this.updateUserCount();
+                }, 30000);
+            }
+
+            bindEvents() {
+                document.getElementById('startButton').addEventListener('click', () => this.startChat());
+                document.getElementById('nextButton').addEventListener('click', () => this.nextChat());
+                document.getElementById('stopButton').addEventListener('click', () => this.stopChat());
+                document.getElementById('sendButton').addEventListener('click', () => this.sendMessage());
+                document.getElementById('messageInput').addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.sendMessage();
+                });
+            }
+
+            checkBanStatus() {
+                if (this.isBanned) {
+                    this.showWarning('Tu cuenta ha sido suspendida permanentemente por violar las normas de comportamiento de OmeChat. No puedes usar el servicio.');
+                    document.getElementById('startButton').disabled = true;
+                    document.getElementById('startButton').textContent = 'Cuenta Suspendida';
+                }
+            }
+
+            updateUserCount() {
+                document.getElementById('userCount').textContent = `${this.userCount.toLocaleString()} usuarios conectados`;
+            }
+
+            updateStatus(status, text) {
+                const statusDot = document.getElementById('statusDot');
+                const statusText = document.getElementById('statusText');
+                
+                statusDot.className = `status-dot ${status}`;
+                statusText.textContent = text;
+            }
+
+            addMessage(sender, message, type = 'normal') {
+                const messagesContainer = document.getElementById('chatMessages');
+                const messageDiv = document.createElement('div');
+                
+                if (type === 'system') {
+                    messageDiv.className = 'message system';
+                } else if (type === 'warning') {
+                    messageDiv.className = 'message warning';
+                } else {
+                    messageDiv.className = `message ${sender}`;
+                }
+                
+                messageDiv.textContent = message;
+                messagesContainer.appendChild(messageDiv);
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }
+
+            clearMessages() {
+                const messagesContainer = document.getElementById('chatMessages');
+                messagesContainer.innerHTML = '';
+            }
+
+            startChat() {
+                if (this.isBanned) return;
+                
+                this.isConnecting = true;
+                this.updateStatus('connecting', 'Conectando...');
+                
+                document.getElementById('startButton').disabled = true;
+                document.getElementById('nextButton').disabled = true;
+                document.getElementById('stopButton').disabled = false;
+                
+                this.clearMessages();
+                this.addMessage('system', 'Buscando a alguien para chatear...', 'system');
+                
+                // Simular tiempo de conexión
+                setTimeout(() => {
+                    this.connectToStranger();
+                }, Math.random() * 5000 + 2000);
+            }
+
+            connectToStranger() {
+                this.isConnected = true;
+                this.isConnecting = false;
+                this.currentPartner = `Usuario${Math.floor(Math.random() * 10000)}`;
+                
+                this.updateStatus('connected', 'Conectado');
+                this.addMessage('system', '¡Conectado! Puedes comenzar a chatear.', 'system');
+                
+                document.getElementById('messageInput').disabled = false;
+                document.getElementById('sendButton').disabled = false;
+                document.getElementById('nextButton').disabled = false;
+                document.getElementById('startButton').disabled = false;
+                document.getElementById('startButton').textContent = 'Reconectar';
+                
+                // Simular mensajes del extraño ocasionalmente
+                this.simulateStrangerMessages();
+            }
+
+            simulateStrangerMessages() {
+                if (!this.isConnected) return;
+                
+                const messages = [
+                    'Hola! ¿Cómo estás?',
+                    'Hi there!',
+                    '¿De dónde eres?',
+                    'What are your interests?',
+                    'Nice to meet you',
+                    '¿Qué tal tu día?',
+                    'Do you speak English?',
+                    'Hablas español?',
+                    'What do you like to do?',
+                    '¿Cuántos años tienes?'
+                ];
+                
+                setTimeout(() => {
+                    if (this.isConnected && Math.random() < 0.7) {
+                        const message = messages[Math.floor(Math.random() * messages.length)];
+                        this.addMessage('stranger', message);
+                        this.simulateStrangerMessages();
+                    }
+                }, Math.random() * 15000 + 5000);
+            }
+
+            nextChat() {
+                this.addMessage('system', 'El extraño se ha desconectado.', 'system');
+                this.disconnect();
+                setTimeout(() => this.startChat(), 1000);
+            }
+
+            stopChat() {
+                this.addMessage('system', 'Chat terminado.', 'system');
+                this.disconnect();
+            }
+
+            disconnect() {
+                this.isConnected = false;
+                this.isConnecting = false;
+                this.currentPartner = null;
+                
+                this.updateStatus('disconnected', 'Desconectado');
+                
+                document.getElementById('messageInput').disabled = true;
+                document.getElementById('sendButton').disabled = true;
+                document.getElementById('nextButton').disabled = true;
+                document.getElementById('stopButton').disabled = true;
+                document.getElementById('startButton').disabled = false;
+                document.getElementById('startButton').textContent = 'Iniciar Chat';
+            }
+
+            sendMessage() {
+                const messageInput = document.getElementById('messageInput');
+                const message = messageInput.value.trim();
+                
+                if (!message || !this.isConnected) return;
+                
+                // Verificar contenido inapropiado
+                if (this.containsInappropriateContent(message)) {
+                    this.handleInappropriateContent(message);
+                    messageInput.value = '';
+                    return;
+                }
+                
+                this.addMessage('you', message);
+                messageInput.value = '';
+                
+                // Simular respuesta del extraño
+                setTimeout(() => {
+                    if (this.isConnected && Math.random() < 0.6) {
+                        const responses = [
+                            'Interesante...',
+                            'Jaja, cierto',
+                            'No estoy seguro',
+                            'Okay',
+                            '¿En serio?',
+                            'Cool',
+                            'Hmm...',
+                            'Tell me more',
+                            'That\'s nice',
+                            '¿Y tú qué opinas?'
+                        ];
+                        const response = responses[Math.floor(Math.random() * responses.length)];
+                        this.addMessage('stranger', response);
+                    }
+                }, Math.random() * 3000 + 1000);
+            }
+
+            containsInappropriateContent(message) {
+                const lowerMessage = message.toLowerCase();
+                return this.inappropriateKeywords.some(keyword => 
+                    lowerMessage.includes(keyword)
+                );
+            }
+
+            handleInappropriateContent(message) {
+                this.userWarnings++;
+                localStorage.setItem('omechat_warnings', this.userWarnings.toString());
+                
+                if (this.userWarnings >= 3) {
+                    // Baneo permanente
+                    this.isBanned = true;
+                    localStorage.setItem('omechat_banned', 'true');
+                    this.showWarning('Has sido suspendido permanentemente de OmeChat por violar repetidamente las normas de comportamiento. Esta es tu tercera advertencia.');
+                    this.stopChat();
+                    document.getElementById('startButton').disabled = true;
+                    document.getElementById('startButton').textContent = 'Cuenta Suspendida';
+                } else {
+                    // Advertencia temporal
+                    this.addMessage('warning', `⚠️ ADVERTENCIA ${this.userWarnings}/3: Contenido inapropiado detectado. Tu mensaje no fue enviado.`, 'warning');
+                    
+                    let warningText = '';
+                    if (this.userWarnings === 1) {
+                        warningText = 'Has recibido tu primera advertencia por enviar contenido inapropiado. El comportamiento inadecuado no está permitido en OmeChat.';
+                    } else if (this.userWarnings === 2) {
+                        warningText = 'Esta es tu segunda advertencia. Una más y serás suspendido permanentemente de OmeChat.';
+                    }
+                    
+                    this.showWarning(warningText);
+                    
+                    // Desconectar temporalmente
+                    setTimeout(() => {
+                        this.addMessage('system', 'Has sido desconectado temporalmente por comportamiento inapropiado.', 'system');
+                        this.disconnect();
+                    }, 2000);
+                }
+            }
+
+            showWarning(text) {
+                document.getElementById('warningText').textContent = text;
+                document.getElementById('warningModal').style.display = 'flex';
+            }
+        }
+
+        function closeWarning() {
+            document.getElementById('warningModal').style.display = 'none';
+        }
+
+        // Inicializar la aplicación
+        document.addEventListener('DOMContentLoaded', () => {
+            new OmeChat();
+        });
+    </script>
+</body>
+</html>
