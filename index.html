@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafeChat - Plataforma de Chat Seguro</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/nsfwjs@latest"></script>
+</head>
+<body>
+    <!-- Pantalla de Bienvenida -->
+    <div id="welcomeScreen" class="screen active">
+        <div class="welcome-container">
+            <h1>SafeChat</h1>
+            <p>Conecta con personas de todo el mundo de forma segura</p>
+            
+            <div class="profile-setup">
+                <h3>Configuración de Perfil (Opcional)</h3>
+                <input type="text" id="username" placeholder="Nombre de usuario">
+                
+                <select id="gender">
+                    <option value="">Seleccionar género</option>
+                    <option value="male">Hombre</option>
+                    <option value="female">Mujer</option>
+                    <option value="non-binary">No binario</option>
+                    <option value="prefer-not-say">Preferir no decir</option>
+                </select>
+                
+                <input type="text" id="looking-for" placeholder="¿Qué buscas? (ej. Solo chatear, conocer gente)">
+                
+                <div class="device-selection">
+                    <h4>Selección de Dispositivos</h4>
+                    <select id="cameraSelect">
+                        <option value="">Seleccionar cámara</option>
+                    </select>
+                    <select id="microphoneSelect">
+                        <option value="">Seleccionar micrófono</option>
+                    </select>
+                </div>
+                
+                <div class="premium-filters" id="premiumFilters" style="display: none;">
+                    <h4>Filtros Premium</h4>
+                    <select id="ageFilter">
+                        <option value="">Cualquier edad</option>
+                        <option value="18-24">18-24 años</option>
+                        <option value="25-35">25-35 años</option>
+                        <option value="35+">35+ años</option>
+                    </select>
+                    
+                    <select id="countryFilter">
+                        <option value="">Cualquier país</option>
+                        <option value="es">España</option>
+                        <option value="mx">México</option>
+                        <option value="ar">Argentina</option>
+                        <option value="us">Estados Unidos</option>
+                    </select>
+                    
+                    <input type="text" id="interestFilter" placeholder="Intereses (ej. música, deportes)">
+                </div>
+            </div>
+            
+            <div class="action-buttons">
+                <button id="startChatBtn" class="btn-primary">Iniciar Chat</button>
+                <button id="togglePremiumBtn" class="btn-secondary">Activar Premium</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pantalla de Chat -->
+    <div id="chatScreen" class="screen">
+        <div class="chat-header">
+            <div class="user-info">
+                <span id="partnerInfo">Conectando...</span>
+                <div class="connection-status" id="connectionStatus">
+                    <span class="status-dot"></span>
+                    <span>Desconectado</span>
+                </div>
+            </div>
+            <div class="chat-controls">
+                <button id="toggleVideoBtn" class="control-btn active" title="Cámara">📹</button>
+                <button id="toggleAudioBtn" class="control-btn active" title="Micrófono">🎤</button>
+                <button id="reportBtn" class="control-btn" title="Reportar">⚠️</button>
+                <button id="nextBtn" class="control-btn" title="Siguiente">⏭️</button>
+                <button id="endChatBtn" class="control-btn" title="Terminar">❌</button>
+            </div>
+        </div>
+
+        <div class="video-container">
+            <video id="localVideo" autoplay muted playsinline></video>
+            <video id="remoteVideo" autoplay playsinline></video>
+            <canvas id="moderationCanvas" style="display: none;"></canvas>
+        </div>
+
+        <div class="chat-container">
+            <div id="chatMessages" class="chat-messages"></div>
+            <div class="chat-input-container">
+                <input type="text" id="messageInput" placeholder="Escribe un mensaje..." maxlength="500">
+                <button id="sendBtn">Enviar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pantalla de Baneo -->
+    <div id="banScreen" class="screen">
+        <div class="ban-container">
+            <h2>Cuenta Suspendida</h2>
+            <div id="banMessage"></div>
+            <div id="banTimer"></div>
+            <button id="backToWelcomeBtn" class="btn-primary">Volver al Inicio</button>
+        </div>
+    </div>
+
+    <!-- Notificaciones -->
+    <div id="notifications" class="notifications"></div>
+
+    <!-- Scripts -->
+    <script src="webrtc.js"></script>
+    <script src="moderation.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>
